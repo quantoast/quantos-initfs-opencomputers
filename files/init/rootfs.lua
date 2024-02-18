@@ -1,3 +1,42 @@
+local filePrototype = {}
+local function readAll(self)
+  local result = ""
+  while true do
+    local chunk = self.backing.read(self.handle, math.huge)
+    if not chunk then
+      break
+    end
+    result = result .. chunk
+  end
+  return result
+end
+local function readLine(self)
+  local result = ""
+  while true do
+    local char = self.backing.read(self.handle, 1)
+    if not char then
+      break
+    end
+    if char == "\n" then
+      break
+    end
+    result = result .. char
+  end
+  return result
+end
+function filePrototype:read(arg)
+  if type(arg) == "number" then
+    return self.backing.read(self.handle, arg)
+  elseif arg == "a" then
+    return readAll(self)
+  elseif arg == "l" then
+    return readLine(self)
+  end
+end
+function filePrototype:close()
+  self.backing.close(self.handle)
+end
+
 local rootFsNodePrototype = {}
 local function createRootFsNode(backing, path)
   return setmetatable({
@@ -39,6 +78,16 @@ function rootFsNodePrototype:createFile(name)
 end
 function rootFsNodePrototype:list()
   return self.backing.list(self.path)
+end
+function rootFsNodePrototype:delete()
+  self.backing.remove(self.path)
+end
+function rootFsNodePrototype:open(name, mode)
+  local handle = self.backing.open(self.path .. "/" .. name, mode)
+  return setmetatable({
+    backing = self.backing,
+    handle = handle
+  }, {__index = filePrototype})
 end
 
 local function formatRootFs(rootfsRaw)
