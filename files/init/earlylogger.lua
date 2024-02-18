@@ -35,10 +35,11 @@ end
 
 local function write(chars)
   for i = 1, #chars do
-    if x > l then
+    local char = chars:sub(i, i)
+    if x > l or char == "\n" then
       nextLine()
     end
-    gpu.set(x, y, chars:sub(i, i))
+    gpu.set(x, y, char)
     x = x + 1
   end
 end
@@ -67,6 +68,10 @@ function earlyLogger.info(message)
 end
 function earlyLogger.warn(message)
   gpuShow(0xFFFF00, "WARN", message)
+  recordMessage(WARN_LEVEL, message)
+end
+function earlyLogger.error(message)
+  gpuShow(0xFF0000, "ERROR", message)
   recordMessage(WARN_LEVEL, message)
 end
 
